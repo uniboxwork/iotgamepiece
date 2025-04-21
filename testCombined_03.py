@@ -27,7 +27,7 @@ import socket
 # setup network connection
 #--------------------------
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client_socket.connect(('192.168.1.11', 50000))
+client_socket.connect(('192.168.1.11', 50000)) # game server
 
 
 
@@ -59,7 +59,7 @@ while(1):	#loop forever
 	#=======================
 	#    NETWORK SEND
 	#=======================
-	client_socket.sendall(str(id).encode())		# send RFID tag id to game server
+	client_socket.sendall(str(id).encode())		# sends RFID tag id to game server
 
 
 	#=======================
@@ -73,7 +73,7 @@ while(1):	#loop forever
 		draw.rectangle(device.bounding_box, outline="white", fill="black")
 		#draw.text((30, 40), "Hello World!", fill="white")
 		#draw.text((30, 40), message, fill="white")
-		draw.text((30, 40), str(id), fill="white")
+		draw.text((30, 40), str(id), fill="white")					# display tag ID on screen
 
 	sleep(3)
 

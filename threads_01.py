@@ -38,10 +38,7 @@ device = sh1106(serial)
 finished = False    # flag for execution stop
 message = ""        # holds message received over network
 currentSquare = 0   # holds most recently read square (RFID tag serial number)
-messageOutBox = []  #
-
-
-
+messageOutBox = ['msg1','msg2','msg3','msg4','msg5','msg6','msg7','msg8', 'msg9', 'msg10']  # holder for messages to be sent
 
 
 
@@ -72,14 +69,70 @@ def networkIN():
         conn.close()                        # close connection
 
 
+# ==================================
+# thread for writing network (OUT)
+# ==================================
+def networkOUT():
+    """Thread for sending messages to game server"""
+    global messageOutBox    # get reference to outbox
+    global finished
+    global message
+
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client_socket.connect(('192.168.1.11', 50000))  # game server IP and Port 50,000
+    client_socket.sendall(str("CONNECTED").encode())  # sends nextMessage to game server
+    client_socket.close()
+
+    #debug
+    #message = messageOutBox.__len__()
+
+    while not finished :
+
+        if messageOutBox.__len__() > 0 :      # messages in outbox?
+            nextMessage = messageOutBox.pop()
+            message = nextMessage               # debug
+            # setup network connection
+            # --------------------------
+            client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            client_socket.connect(('192.168.1.11', 50000))      # game server IP and Port 50,000
+
+            # send
+            #client_socket.sendall(str(id).encode())  # sends RFID tag id to game server
+            client_socket.sendall(str(nextMessage).encode())  # sends nextMessage to game server
+
+            if messageOutBox.__len__() == 0:    # outbox now empty? Close connection...
+                client_socket.close()
+
+            sleep(3) # slow down for debugging
 
 
 
+
+
+# ===============
 # Start threads
-
+# ===============
 netIN = Thread(target=networkIN)
 netIN.daemon = True     # thread will yield to closing down
 netIN.start()
+
+
+# Connnect once to game server...
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client_socket.connect(('192.168.1.11', 50000))  # game server IP and Port 50,000
+client_socket.sendall(str("CONNECTED").encode())  # sends nextMessage to game server
+client_socket.close()
+
+
+
+
+"""
+netOUT = Thread(target=networkOUT)
+netOUT.daemon = True
+netOUT.start()
+
+"""
+
 
 
 
@@ -100,7 +153,7 @@ while (not finished):
 
     with canvas(device) as draw:
         draw.rectangle(device.bounding_box, outline="white", fill="black")
-        draw.text((30, 40), "MESSAGE: " + message, fill="white")
+        draw.text((30, 40), "MESSAGE: " + str(message), fill="white")
 
         # print("******************")
         # print(data.upper())			# prints out message from client in uppercase
