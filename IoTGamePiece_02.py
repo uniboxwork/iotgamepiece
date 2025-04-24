@@ -50,14 +50,30 @@ device = sh1106(serial)
 
 
 
-# -----------
+# ===========
 # Variables
-# -----------
+# ===========
 finished = False        # flag for execution stop
-message = ""            # holds message received over network
+
+finishedRFID = False    # flag for RFID thread execution stop
+finishedNetIN = False   # flag for networkIN thread execution stop
+finishedNetOUT = False  # flag for networkOUT thread execution stop
+
+
 currentSquare = 0       # holds most recently read square (RFID tag serial number)
 previousSquare = 0      # holds previous read squire (RFID tag serial number)
-messageOutBox = ['msg1', 'msg2', 'msg3', 'msg4', 'msg5', 'msg6', 'msg7', 'msg8', 'msg9', 'msg10']  # holder for messages to be sent
+messageOutBox = []      # holder for messages to be sent
+separator = '#'         # seperator of fields in network messages
+
+# message
+# -----------
+messageRaw = ""         # holds raw message received over network
+messageFrom = ""        # separated message sender
+messageSubject = ""     # separated message subject
+messageContent = ""       # separated message value
+
+#device variables
+deviceName = "gp1"
 
 
 
@@ -67,8 +83,56 @@ messageOutBox = ['msg1', 'msg2', 'msg3', 'msg4', 'msg5', 'msg6', 'msg7', 'msg8',
 # sendMessage
 # ============
 # adds a message to the outbox for sending
-def sendMessage(message):
-    messageOutBox.append(message)
+def sendMessage(subject="NO SUBJECT", value="NO VALUE"):
+    #compose message and add to outBox...
+    messageOutBox.append(deviceName + separator + subject + separator + value)
+
+
+
+# LOAD UP SOME TEST MESSAGES
+
+sendMessage("msg1", "Hello")
+sendMessage("msg2", "World")
+sendMessage("msg3", "How")
+sendMessage("msg4", "are")
+sendMessage("msg5", "you")
+sendMessage("msg6", "today")
+sendMessage("msg7", "Jack")
+sendMessage("msg8", "and")
+sendMessage("msg9", "Jill")
+sendMessage("msg10", "went")
+sendMessage("msg11", "up")
+sendMessage("msg12", "the")
+
+
+# =============
+# splitMessage
+# =============
+# splits a message into fields
+def readMessage(msg):
+
+    # get access global variable
+    global messageRaw
+    global messageFrom
+    global messageSubject
+    global messageContent
+
+    messageRaw = msg                    #set raw contents
+
+    # split message
+    messageSplit = msg.split(separator)  # split message by message separator symbol
+
+    messageFrom = messageSplit[0]       #set from
+    messageSubject = messageSplit[1]    #set subject
+    messageContent = messageSplit[2]    #set content
+
+
+
+
+
+
+
+
 
 
 
@@ -87,7 +151,7 @@ def networkIN():
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # create socket
     server_socket.bind(('192.168.1.27', 50000))  # bind to this pi's IP address and port 50,000
 
-    while (not finished):  # loop until execution halted
+    while (not finishedNetIN):  # loop until execution halted
 
         server_socket.listen(1)
 
@@ -101,6 +165,7 @@ def networkIN():
             #message = str(data)  # set external message to received data. NOTE: this conversion will be visible but does not work. Needs to be decoded properly like below
             message = data.decode('utf-8', 'replace')  # byte data has to be converted into a character set - 'utf-8' here. 'replace' replaces characters it does not recognise. Was causing comparison prolems "exit" == "exit" was not working. Would show letter 'b' before printing on OLED to denote was raw bytes and hadn't been decoded yet.
 
+            readMessage(message)
 
         conn.close()  # close connection
 
@@ -136,7 +201,9 @@ def networkOUT():
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect(('192.168.1.11', 50000))  # game server IP and Port 50,000
 
-    client_socket.sendall(str("CONNECTED").encode())
+    #client_socket.sendall(str("CONNECTED").encode())
+    sendMessage("CONNECTED")
+
 
 
     # debug
@@ -144,12 +211,12 @@ def networkOUT():
 
     count = 0
 
-    while not finished:
+    while not finishedNetOUT:
 
         if messageOutBox.__len__() > 0:  # messages in outbox?
 
             nextMessage = messageOutBox.pop()		   # read next message from outbox
-            nextMessage = "IoTPiece: " + nextMessage       # debug
+            #nextMessage = deviceName + separator + nextMessage       # debug
 
             #nextMessage = ("python:" + str(count))
             #count = (count + 1)
@@ -178,10 +245,13 @@ def networkOUT():
 # =============================
 # thread for reading RFID Tags
 #==============================
-def cardReaderIN():
+def rfidReader():
+
 
     #get reference to global variables
     global finished
+    global finishedRFID
+    global currentSquare
 
     #===========================
     #     CARD READER
@@ -191,7 +261,7 @@ def cardReaderIN():
 
     count = 0   #  counter for how many messages are being sent
 
-    while not finished:
+    while not finishedRFID:
 
         #reader = SimpleMFRC522()
 
@@ -201,7 +271,10 @@ def cardReaderIN():
             print("=======================")
             id, text = reader.read()
             #message = text
-            sendMessage("TagID: " + str(id) + " Read Count: " + str(count))
+            #sendMessage("TagID: " + str(id) + " Read Count: " + str(count))
+            sendMessage("TAG", str(id))
+            currentSquare = str(id)
+
             count = count + 1
             print("| id: " + str(id))
             print("| text: " + str(text))
@@ -211,17 +284,6 @@ def cardReaderIN():
            #GPIO.cleanup()
 
     GPIO.cleanup()
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -242,9 +304,13 @@ netOUT = Thread(target=networkOUT)
 netOUT.daemon = True
 netOUT.start()
 
-cardIN = Thread(target=cardReaderIN)
-cardIN.daemon = True
-cardIN.start()
+rfidIN = Thread(target=rfidReader)
+rfidIN.daemon = True
+rfidIN.start()
+
+
+
+
 
 
 
@@ -257,16 +323,29 @@ while (not finished):
 
 
 
-    if message == "exit":
-        finished = True  # end looping/execution
+    #if message == "exit":
+    if messageRaw == "hst#cmd#exit":
+
+        finishedNetIN = True    # stop netIN thread
+        finishedNetOUT = True   # stop netOUT thread
+        finishedRFID = True     # stop rfidIN thread
+        finished = True         # end looping/execution
+
         with canvas(device) as draw:
             draw.rectangle(device.bounding_box, outline="white", fill="black")
             draw.text((5, 40), "Exiting - Bye", fill="white")
 
 
+        break
+
+
     with canvas(device) as draw:
         draw.rectangle(device.bounding_box, outline="white", fill="black")
-        draw.text((5, 40), "MSG: " + message, fill="white")
+        draw.text((5, 5), "From: " + messageFrom, fill="white")
+        draw.text((5, 15), "Subj: " + messageSubject, fill="white")
+        draw.text((5, 25), "Cont: " + messageContent, fill="white")
+        draw.text((5, 35), "RAW: " + messageRaw, fill="white")
+        draw.text((5, 50), "RFID: " + str(currentSquare), fill="white")
 
         # print("******************")
         # print(data.upper())			# prints out message from client in uppercase
