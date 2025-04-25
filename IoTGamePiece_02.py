@@ -83,9 +83,10 @@ deviceName = "gp1"
 # sendMessage
 # ============
 # adds a message to the outbox for sending
-def sendMessage(subject="NO SUBJECT", value="NO VALUE"):
+# format:      deviceName#subject#content   e.g.  gp1#TAG#8988789789
+def sendMessage(subject="NO SUBJECT", content="NO VALUE"):
     #compose message and add to outBox...
-    messageOutBox.append(deviceName + separator + subject + separator + value)
+    messageOutBox.append(deviceName + separator + subject + separator + content)
 
 
 
