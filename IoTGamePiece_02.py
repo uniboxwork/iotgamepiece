@@ -253,6 +253,7 @@ def rfidReader():
     global finished
     global finishedRFID
     global currentSquare
+    global previousSquare
 
     #===========================
     #     CARD READER
@@ -273,8 +274,14 @@ def rfidReader():
             id, text = reader.read()
             #message = text
             #sendMessage("TagID: " + str(id) + " Read Count: " + str(count))
-            sendMessage("TAG", str(id))
-            currentSquare = str(id)
+
+
+            if(str(id) != previousSquare):          # throttling - reduces sending messages over network to only when RFID reading different to previous
+                sendMessage("TAG", str(id))
+                currentSquare = str(id)
+
+            previousSquare = str(id)                # place current reading as previous for keeping history
+
 
             count = count + 1
             print("| id: " + str(id))
