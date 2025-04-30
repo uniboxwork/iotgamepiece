@@ -1,7 +1,7 @@
 # =====================================================================================
 #  IoT Game Piece - v0.1
 # =====================================================================================
-""" [to be done] Registers with game server
+"""
     Receives messages from game server
     Updates state
     Checks state
@@ -92,22 +92,86 @@ def sendMessage(subject="NO SUBJECT", content="NO VALUE"):
 
 # LOAD UP SOME TEST MESSAGES
 
+# sys message test...
+sendMessage("sys", "start")
+sendMessage("sys", "pause")
+sendMessage("sys", "resume")
+sendMessage("sys", "restart")
+sendMessage("sys", "end")
+
+
+# TAG message test...
+sendMessage("TAG", "584604745789")
+sendMessage("TAG", "584604680242")
+sendMessage("TAG", "584604614707")
+sendMessage("TAG", "584604483633")
+sendMessage("TAG", "584615428318")
+sendMessage("TAG", "584615362783")
+sendMessage("TAG", "584606887152")
+sendMessage("TAG", "584615166162")
+sendMessage("TAG", "584615231709")
+sendMessage("TAG", "584615558951")
+sendMessage("TAG", "584615821115")
+sendMessage("TAG", "584615624484")
+sendMessage("TAG", "584615690021")
+sendMessage("TAG", "584615755578")
+sendMessage("TAG", "584604155914")
+sendMessage("TAG", "584604221493")
+sendMessage("TAG", "584604287028")
+sendMessage("TAG", "584604352567")
+sendMessage("TAG", "584604418102")
+sendMessage("TAG", "584604549168")
+
+"""
+
+
+        
+        for samples...
+        tagMappings.put("584604745789",1);
+        tagMappings.put("584604680242",2);
+        tagMappings.put("584604614707",3);
+        tagMappings.put("584604483633",4);
+        tagMappings.put("584615428318",5);
+        tagMappings.put("584615362783",6);
+        tagMappings.put("584606887152",7);
+        tagMappings.put("584615166162",8);
+        tagMappings.put("584615231709",9);
+        tagMappings.put("584615558951",10);
+        tagMappings.put("584615821115",11);
+        tagMappings.put("584615624484",12);
+        tagMappings.put("584615690021",13);
+        tagMappings.put("584615755578",14);
+        tagMappings.put("584604155914",15);
+        tagMappings.put("584604221493",16);
+        tagMappings.put("584604287028",17);
+        tagMappings.put("584604352567",18);
+        tagMappings.put("584604418102",19);
+        tagMappings.put("584604549168",20);
+         
+
+
+"""
+
+
+
+
+"""
 sendMessage("msg1", "Hello")
 sendMessage("msg2", "World")
-sendMessage("msg3", "How")
-sendMessage("msg4", "are")
-sendMessage("msg5", "you")
-sendMessage("msg6", "today")
-sendMessage("msg7", "Jack")
-sendMessage("msg8", "and")
-sendMessage("msg9", "Jill")
-sendMessage("msg10", "went")
-sendMessage("msg11", "up")
+sendMessage("msg3", "the")
+sendMessage("msg4", "quick")
+sendMessage("msg5", "brown")
+sendMessage("msg6", "fox")
+sendMessage("msg7", "jumps")
+sendMessage("msg8", "over")
+sendMessage("msg9", "the")
+sendMessage("msg10", "lazy")
+sendMessage("msg11", "dog")
 sendMessage("msg12", "the")
-
+"""
 
 # =============
-# splitMessage
+# readMessage
 # =============
 # splits a message into fields
 def readMessage(msg):
@@ -214,9 +278,15 @@ def networkOUT():
 
     while not finishedNetOUT:
 
+        #global messageFrom      #debug
+        #messageFrom = str(messageOutBox.__len__())            #debug - display in 'from: ' box
+
         if messageOutBox.__len__() > 0:  # messages in outbox?
 
-            nextMessage = messageOutBox.pop()		   # read next message from outbox
+            #nextMessage = messageOutBox.pop()		   # read next message from outbox - reads from last place in stack
+            nextMessage = messageOutBox.pop(0)         # read next message from outbox - reads form the first place
+
+
             #nextMessage = deviceName + separator + nextMessage       # debug
 
             #nextMessage = ("python:" + str(count))
